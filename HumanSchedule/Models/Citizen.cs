@@ -24,7 +24,7 @@ public class Citizen : NotifyBase
     get => _icon;
     set
     {
-      if (AllowedIcons.Contains(value))
+      if (!string.IsNullOrEmpty(value))
         SetField(ref _icon, value);
     }
   }
@@ -75,5 +75,5 @@ public class Citizen : NotifyBase
 
   public ObservableCollection<ScheduleEvent> Schedule { get; set; } = new();
 
-  public static IReadOnlyCollection<string> GetAllowedIcons() => AllowedIcons;
+  public static IReadOnlyCollection<string> GetAllowedIcons() => PopSimProto.Services.IconService.CitizenIcons;
 }

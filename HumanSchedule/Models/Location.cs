@@ -8,7 +8,6 @@ namespace HumanSchedule.Models;
 
 public class Location : NotifyBase
 {
-  private static readonly HashSet<string> AllowedIcons = new HashSet<string>{"🏥","🏫","🏋️","🎬","🛒","☕","📚","🚓","🚒","⛪","🏨"};
   private string _icon = "🏠";
   private string _name = string.Empty;
   private double _x;
@@ -19,9 +18,8 @@ public class Location : NotifyBase
     get => _icon;
     set
     {
-      if (AllowedIcons.Contains(value))
+      if (!string.IsNullOrEmpty(value))
         SetField(ref _icon, value);
-      // else ignore or optionally throw exception
     }
   }
 
@@ -43,7 +41,7 @@ public class Location : NotifyBase
     set => SetField(ref _y, value);
   }
 
-  public static IReadOnlyCollection<string> GetAllowedIcons() => AllowedIcons;
+  public static IReadOnlyCollection<string> GetAllowedIcons() => PopSimProto.Services.IconService.LocationIcons;
 
   public override string ToString() => $"{Icon} {Name}";
 }

@@ -10,6 +10,7 @@ using HumanSchedule.Services;
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
+using PopSimProto.Services;
 
 namespace PopSimProto;
 
@@ -28,16 +29,14 @@ public partial class MainWindow : Window
   private Location? _selectedLocation;
   private bool _suppressEvents;
 
-  private List<string> _locationIcons;
-  private List<string> _citizenIcons;
-
   public MainWindow()
   {
     InitializeComponent();
-    _locationIcons = File.ReadAllText("location-symbols.txt").Split(' ', StringSplitOptions.RemoveEmptyEntries).ToList();
-    _citizenIcons = File.ReadAllText("citizen-symbols.txt").Split(' ', StringSplitOptions.RemoveEmptyEntries).ToList();
-    CmbLocationIcon.ItemsSource = _locationIcons;
-    CmbCitizenIcon.ItemsSource = _citizenIcons;
+    IconService.LoadIcons("citizen-symbols.txt", "location-symbols.txt");
+    CmbCitizenIcon.ItemsSource = IconService.CitizenIcons;
+    CmbCitizenIcon.FontFamily = new FontFamily("Segoe UI Emoji");
+    CmbLocationIcon.ItemsSource = IconService.LocationIcons;
+    CmbLocationIcon.FontFamily = new FontFamily("Segoe UI Emoji");
     SetupSimTimer();
     UpdateUI();
   }
@@ -187,6 +186,7 @@ public partial class MainWindow : Window
     MapCanvas.Children.Clear();
 
     const double scale = 1000.0 / 10000.0;
+    var emojiFont = new FontFamily("Segoe UI Emoji");
 
     foreach (var loc in _locations)
     {
@@ -198,6 +198,7 @@ public partial class MainWindow : Window
       var tb = new TextBlock
       {
         Text = loc.Icon,
+        FontFamily = emojiFont,
         FontSize = isSelected ? 22 : 18,
         ToolTip = loc.Name,
         Tag = loc
@@ -248,6 +249,7 @@ public partial class MainWindow : Window
       var tb = new TextBlock
       {
         Text = cit.Icon,
+        FontFamily = emojiFont,
         FontSize = isSelected ? 18 : 14,
         ToolTip = $"{cit.Firstname} {cit.Lastname}\n{cit.Status}",
         Tag = cit
@@ -317,17 +319,64 @@ public partial class MainWindow : Window
   private void CmbCitizenIcon_SelectionChanged(object sender, SelectionChangedEventArgs e)
   {
     if (_suppressEvents || _selectedCitizen == null) return;
-    _selectedCitizen.Icon = CmbCitizenIcon.SelectedItem as string;
-    RenderMap();
+    if (CmbCitizenIcon.SelectedItem is string icon)
+    {
+        _selectedCitizen.Icon = icon;
+        PeopleList.Items.Refresh();
+        RenderMap();
+    }
   }
 
   private void BtnAddSchedule_Click(object sender, RoutedEventArgs e)
   {
     if (_selectedCitizen == null) return;
 
+    // Pick a smart default time: find the largest gap in the existing schedule
+    TimeSpan defaultTime = TimeSpan.FromHours(8);
+    var existing = _selectedCitizen.Schedule.OrderBy(s => s.Time).ToList();
+    if (existing.Count > 0)
+    {
+      TimeSpan bestGapMid = TimeSpan.FromHours(12);
+      TimeSpan bestGap = TimeSpan.Zero;
+
+      for (int i = 0; i < existing.Count; i++)
+      {
+        var current = existing[i];
+        var next = (i + 1 < existing.Count) ? existing[i + 1] : null;
+
+        TimeSpan gap;
+        TimeSpan mid;
+        if (next != null)
+        {
+          gap = next.Time - current.Time;
+          mid = current.Time + TimeSpan.FromTicks(gap.Ticks / 2);
+        }
+        else
+        {
+          // Gap from last event wrapping around to first event
+          gap = (TimeSpan.FromHours(24) - current.Time) + existing[0].Time;
+          var halfTicks = gap.Ticks / 2;
+          mid = current.Time + TimeSpan.FromTicks(halfTicks);
+          if (mid >= TimeSpan.FromHours(24))
+            mid -= TimeSpan.FromHours(24);
+        }
+
+        if (gap > bestGap)
+        {
+          bestGap = gap;
+          bestGapMid = mid;
+        }
+      }
+
+      // Round to nearest 30 minutes
+      int totalMinutes = (int)bestGapMid.TotalMinutes;
+      totalMinutes = (totalMinutes / 30) * 30;
+      defaultTime = TimeSpan.FromMinutes(totalMinutes);
+    }
+
     var newEvent = new ScheduleEvent
     {
-      Time = TimeSpan.FromHours(12),
+      Time = defaultTime,
       TargetLocation = _locations.FirstOrDefault(),
       Activity = "Idle"
     };
@@ -352,6 +401,19 @@ public partial class MainWindow : Window
       ScheduleGrid.Items.Refresh();
       RenderMap();
     }
+  }
+
+  private void ScheduleGrid_CellEditEnding(object sender, DataGridCellEditEndingEventArgs e)
+  {
+    if (_selectedCitizen == null) return;
+    if (e.EditAction == DataGridEditAction.Cancel) return;
+
+    // Defer recalculation until after the binding has committed the new value
+    Dispatcher.BeginInvoke(new Action(() =>
+    {
+      SimulationService.RecalculateScheduleTimes(_selectedCitizen);
+      ScheduleGrid.Items.Refresh();
+    }), System.Windows.Threading.DispatcherPriority.Background);
   }
 
   private void LocationList_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -418,8 +480,12 @@ public partial class MainWindow : Window
   private void CmbLocationIcon_SelectionChanged(object sender, SelectionChangedEventArgs e)
   {
     if (_suppressEvents || _selectedLocation == null) return;
-    _selectedLocation.Icon = CmbLocationIcon.SelectedItem as string;
-    RenderMap();
+    if (CmbLocationIcon.SelectedItem is string icon)
+    {
+        _selectedLocation.Icon = icon;
+        LocationList.Items.Refresh();
+        RenderMap();
+    }
   }
 
   private void UpdateUI()

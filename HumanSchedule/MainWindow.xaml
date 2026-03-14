@@ -92,19 +92,17 @@
                     <RowDefinition Height="*" MinHeight="100"/>
                 </Grid.RowDefinitions>
 
-                <!-- ===== 3.5 CITIZEN LIST (People) ===== -->
                 <TextBlock Grid.Row="0" Text="People" Style="{StaticResource HeaderLabel}"/>
                 <ListBox x:Name="PeopleList" Grid.Row="1" Margin="4,0" 
                          SelectionChanged="PeopleList_SelectionChanged"
                          ScrollViewer.VerticalScrollBarVisibility="Auto">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding DisplayName}" FontSize="13"/>
+                            <TextBlock Text="{Binding DisplayName}" FontFamily="Segoe UI Emoji" FontSize="13"/>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
 
-                <!-- ===== 3.6 CITIZEN EDITOR (Selected Person) ===== -->
                 <TextBlock Grid.Row="2" Text="Selected Person" Style="{StaticResource HeaderLabel}" 
                            Margin="4,8,4,2"/>
 
@@ -127,9 +125,13 @@
                                 FontSize="36" MinWidth="56" MinHeight="56" Margin="0,0,8,0"
                                 VerticalAlignment="Top" ToolTip="Select icon">
                             <Button.Content>
-                                <ComboBox x:Name="CmbCitizenIcon" FontSize="24" Width="56" Height="36"
-                                          ItemsSource="{Binding Source={x:Static models:Citizen.GetAllowedIcons}}"
-                                          SelectedItem="{Binding Icon, Mode=TwoWay}"/>
+                                <ComboBox x:Name="CmbCitizenIcon" FontSize="24" Width="56" Height="36" SelectionChanged="CmbCitizenIcon_SelectionChanged">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding}" FontFamily="Segoe UI Emoji" FontSize="24"/>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
                             </Button.Content>
                         </Button>
 
@@ -174,7 +176,8 @@
                               CanUserAddRows="False" CanUserDeleteRows="False"
                               HeadersVisibility="Column" GridLinesVisibility="Horizontal"
                               SelectionMode="Single" FontSize="12"
-                              ScrollViewer.VerticalScrollBarVisibility="Auto">
+                              ScrollViewer.VerticalScrollBarVisibility="Auto"
+                              CellEditEnding="ScheduleGrid_CellEditEnding">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Time" Width="60"
                                 Binding="{Binding Time, StringFormat=hh\\:mm}" IsReadOnly="False"/>
@@ -184,21 +187,12 @@
                                 SelectedItemBinding="{Binding TargetLocation}"/>
                             <DataGridTextColumn Header="Activity" Width="80"
                                 Binding="{Binding Activity}" IsReadOnly="False"/>
-                            <DataGridTextColumn Header="Travel" Width="55" IsReadOnly="True">
-                                <DataGridTextColumn.Binding>
-                                    <Binding Path="TravelTime" StringFormat="{}{0:h\h mm}"/>
-                                </DataGridTextColumn.Binding>
-                            </DataGridTextColumn>
-                            <DataGridTextColumn Header="Spend" Width="55" IsReadOnly="True">
-                                <DataGridTextColumn.Binding>
-                                    <Binding Path="SpendTime" StringFormat="{}{0:h\h mm}"/>
-                                </DataGridTextColumn.Binding>
-                            </DataGridTextColumn>
-                            <DataGridTextColumn Header="Total" Width="55" IsReadOnly="True">
-                                <DataGridTextColumn.Binding>
-                                    <Binding Path="TotalTime" StringFormat="{}{0:h\h mm}"/>
-                                </DataGridTextColumn.Binding>
-                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="Travel" Width="55" IsReadOnly="True"
+                                Binding="{Binding TravelTimeDisplay}"/>
+                            <DataGridTextColumn Header="Spend" Width="55" IsReadOnly="True"
+                                Binding="{Binding SpendTimeDisplay}"/>
+                            <DataGridTextColumn Header="Total" Width="55" IsReadOnly="True"
+                                Binding="{Binding TotalTimeDisplay}"/>
                         </DataGrid.Columns>
 
                         <!-- Highlight conflicting rows -->
@@ -227,14 +221,14 @@
                 <Border DockPanel.Dock="Bottom" BorderBrush="#CCC" BorderThickness="1" 
                         Padding="4" Margin="0,4,0,0">
                     <StackPanel x:Name="LocationEditorPanel" IsEnabled="False">
-                        <Button x:Name="BtnLocationIcon" Content="🏠" FontSize="28" 
-                                HorizontalAlignment="Left" Margin="0,0,0,4" ToolTip="Select icon">
-                            <Button.Content>
-                                <ComboBox x:Name="CmbLocationIcon" FontSize="20" Width="48" Height="28"
-                                          ItemsSource="{Binding Source={x:Static models:Location.GetAllowedIcons}}"
-                                          SelectedItem="{Binding Icon, Mode=TwoWay}"/>
-                            </Button.Content>
-                        </Button>
+                        <!-- Location Icon Auswahl -->
+                        <ComboBox x:Name="CmbLocationIcon" FontSize="20" Width="60" Margin="0,0,0,4" SelectionChanged="CmbLocationIcon_SelectionChanged">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" FontFamily="Segoe UI Emoji" FontSize="20"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
                         <TextBlock Text="Name" FontSize="10" Foreground="Gray"/>
                         <TextBox x:Name="TxtLocationName" Margin="0,0,0,4"
                                  TextChanged="LocationField_Changed"/>
@@ -252,7 +246,7 @@
                          ScrollViewer.VerticalScrollBarVisibility="Auto">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <TextBlock FontSize="13">
+                            <TextBlock FontFamily="Segoe UI Emoji" FontSize="13">
                                 <Run Text="{Binding Icon, Mode=OneWay}"/>
                                 <Run Text=" "/>
                                 <Run Text="{Binding Name, Mode=OneWay}"/>

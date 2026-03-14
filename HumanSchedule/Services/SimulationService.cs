@@ -136,8 +136,8 @@ public class SimulationService
       }
       else
       {
-        depX = sorted[i - 1].TargetLocation?.X ?? 0;
-        depY = sorted[i - 1].TargetLocation?.Y ?? 0;
+        depX = sorted[i - 1].TargetLocation?.X ?? citizen.Home?.X ?? 0;
+        depY = sorted[i - 1].TargetLocation?.Y ?? citizen.Home?.Y ?? 0;
       }
 
       double destX = current.TargetLocation?.X ?? 0;

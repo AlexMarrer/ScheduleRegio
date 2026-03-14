@@ -38,19 +38,31 @@ public class ScheduleEvent : NotifyBase
   public TimeSpan TravelTime
   {
     get => _travelTime;
-    set => SetField(ref _travelTime, value);
+    set
+    {
+      if (SetField(ref _travelTime, value))
+        OnPropertyChanged(nameof(TravelTimeDisplay));
+    }
   }
 
   public TimeSpan SpendTime
   {
     get => _spendTime;
-    set => SetField(ref _spendTime, value);
+    set
+    {
+      if (SetField(ref _spendTime, value))
+        OnPropertyChanged(nameof(SpendTimeDisplay));
+    }
   }
 
   public TimeSpan TotalTime
   {
     get => _totalTime;
-    set => SetField(ref _totalTime, value);
+    set
+    {
+      if (SetField(ref _totalTime, value))
+        OnPropertyChanged(nameof(TotalTimeDisplay));
+    }
   }
 
   public bool HasConflict
@@ -59,13 +71,21 @@ public class ScheduleEvent : NotifyBase
     set => SetField(ref _hasConflict, value);
   }
 
+  // Display properties for DataGrid binding
+  public string TravelTimeDisplay => FormatDuration(_travelTime);
+  public string SpendTimeDisplay => FormatDuration(_spendTime);
+  public string TotalTimeDisplay => FormatDuration(_totalTime);
+
   /// <summary>
   /// Formats a TimeSpan as "Xh00" (e.g. 0h30, 8h30, 11h40)
+  /// Negative values are shown as "-Xh00"
   /// </summary>
   public static string FormatDuration(TimeSpan ts)
   {
+    bool negative = ts < TimeSpan.Zero;
+    if (negative) ts = ts.Negate();
     int totalHours = (int)ts.TotalHours;
     int minutes = ts.Minutes;
-    return $"{totalHours}h{minutes:D2}";
+    return negative ? $"-{totalHours}h{minutes:D2}" : $"{totalHours}h{minutes:D2}";
   }
 }
