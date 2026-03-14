@@ -1,0 +1,49 @@
+# Build folders
+bin/
+obj/
+
+# Visual Studio user files
+*.user
+*.rsuser
+*.suo
+
+# Visual Studio folders
+.vs/
+
+# Rider / JetBrains
+.idea/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# NuGet packages
+*.nupkg
+packages/
+
+# Visual Studio Code
+.vscode/
+
+# Test results
+TestResults/
+
+# Publish output
+publish/
+
+# Dotnet generated
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Backup files
+*.bak
+
+# Temporary files
+*.tmp
+
+# Resharper
+_ReSharper*/
+*.DotSettings.user
